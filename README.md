@@ -8,3 +8,8 @@ Eventually you'll want the [official version](https://github.com/FlyGoat/RyzenAd
 script right now you can use my [fork](https://github.com/geeksville/RyzenAdj).
 
 Since this script is crude right now, it assumes you have that tool installed in ~/.local/bin or /usr/sbin.
+
+## Usage
+
+ryzen-wrap.py <low/powersave/balanced/high>
+
