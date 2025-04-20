@@ -3,6 +3,7 @@
 import sys
 import os
 import subprocess
+import time
 
 
 def set_gpu_performance_level(mode):
@@ -67,6 +68,7 @@ def main():
         print(f"Error: Invalid argument '{mode_arg}'. Use 'low/powersave/balanced/high'.", file=sys.stderr)
         sys.exit(1)
 
+    time.sleep(1)  # Wait for 1 second (nasty hack to make sure KDE is done setting things)
     # Call ryzenadj with the calculated limits
     call_ryzenadj([
         f"--stapm-limit={norm_lim * 1000}",
