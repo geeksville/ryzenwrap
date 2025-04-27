@@ -48,33 +48,34 @@ def main():
 
     # Power settings based on mode
     if mode_arg == "low":
-        norm_lim = 30
         fast_lim = 40
         slow_lim = 20
         gpu_mode = "low"
+        opts = ["--power-saving"]
     elif mode_arg == "powersave":
-        norm_lim = 55
         fast_lim = 55
         slow_lim = 40
+        opts = ["--power-saving"]
     elif mode_arg == "balanced":
-        norm_lim = 71
         fast_lim = 71
         slow_lim = 52
+        opts = ["--max-performance"]
     elif mode_arg == "high":
-        norm_lim = 86
         fast_lim = 86
         slow_lim = 70
+        opts = ["--max-performance"]
     else:
         print(f"Error: Invalid argument '{mode_arg}'. Use 'low/powersave/balanced/high'.", file=sys.stderr)
         sys.exit(1)
 
     time.sleep(1)  # Wait for 1 second (nasty hack to make sure KDE is done setting things)
     # Call ryzenadj with the calculated limits
-    call_ryzenadj([
-        f"--stapm-limit={norm_lim * 1000}",
+
+    opts += [
         f"--fast-limit={fast_lim * 1000}",
         f"--slow-limit={slow_lim * 1000}"
-    ])
+    ]
+    call_ryzenadj(opts)
 
     # Set GPU performance level
     set_gpu_performance_level(gpu_mode)
