@@ -6,17 +6,26 @@ import subprocess
 import time
 
 
-def set_gpu_performance_level(mode):
-    gpu_path = "/sys/devices/pci0000:00/0000:00:08.1/0000:c4:00.0/power_dpm_force_performance_level"
+def sudo_echo(filename, contents):
     try:
+        print(f"Setting {filename} to {contents}")        
         subprocess.run(
-            ["sudo", "bash", "-c", f"echo {mode} > {gpu_path}"],
+            ["sudo", "bash", "-c", f"echo {contents} > {filename}"],
             check=True
         )
-        print(f"Setting GPU performance level to {mode}")
     except subprocess.CalledProcessError as e:
-        print(f"Warning: Failed to set GPU performance level to {mode}. {e}", file=sys.stderr)
+        print(f"Warning: Can't set {filename} to {contents} {e}", file=sys.stderr)
 
+
+def set_gpu_performance_level(mode):
+    sudo_echo("/sys/devices/pci0000:00/0000:00:08.1/0000:c4:00.0/power_dpm_force_performance_level", mode)
+
+
+# for asys-wmi
+# /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy
+# 0 - default, 1 - overboost, 2 - silent
+def set_asus_thermal_policy(mode):
+    sudo_echo("/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy", mode)
 
 def call_ryzenadj(arguments):
     # Check ~/.local/bin/ryzenadj
@@ -46,15 +55,26 @@ def main():
     # Default GPU mode
     gpu_mode = "auto"
 
-    # Power settings based on mode
+    # for asys-wmi
+    # /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy
+    # 0 - default, 1 - overboost, 2 - silent
+    ASUS_DEFAULT = 0
+    ASUS_OVERBOOST = 1
+    ASUS_SILENT = 2
+
+    asus_mode = ASUS_DEFAULT
+
     if mode_arg == "low":
         fast_lim = 40
         slow_lim = 20
         gpu_mode = "low"
+        asus_mode = ASUS_SILENT
         opts = ["--power-saving"]
     elif mode_arg == "powersave":
+        # This is the same as low, but with a different GPU mode
         fast_lim = 55
         slow_lim = 40
+        asus_mode = ASUS_SILENT
         opts = ["--power-saving"]
     elif mode_arg == "balanced":
         fast_lim = 71
@@ -63,19 +83,24 @@ def main():
     elif mode_arg == "high":
         fast_lim = 86
         slow_lim = 70
+        asus_mode = ASUS_OVERBOOST
         opts = ["--max-performance"]
     else:
         print(f"Error: Invalid argument '{mode_arg}'. Use 'low/powersave/balanced/high'.", file=sys.stderr)
         sys.exit(1)
 
     time.sleep(1)  # Wait for 1 second (nasty hack to make sure KDE is done setting things)
-    # Call ryzenadj with the calculated limits
+    set_asus_thermal_policy(asus_mode)
 
+    # Call ryzenadj with the calculated limits
     opts += [
         f"--fast-limit={fast_lim * 1000}",
         f"--slow-limit={slow_lim * 1000}"
     ]
-    call_ryzenadj(opts)
+    # no longer needed - better to just use the Asus API
+    # call_ryzenadj(opts)
+
+
 
     # Set GPU performance level
     set_gpu_performance_level(gpu_mode)
